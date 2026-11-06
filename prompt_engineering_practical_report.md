@@ -1,136 +1,81 @@
 # Prompt Engineering Practical Assignment
 
-## Zero-Shot vs Few-Shot Prompting, Chain-of-Thought Prompting, and Structured Output
+## Zero-Shot vs Few-Shot Prompting, Step-by-Step Prompting, and Structured Output
 
-**Prepared by:** \[Your Name\]\
-**Course / Batch:** \[Course or Batch\]\
-**Date of experiment record:** 6 November 2026\
-**Model used for the recorded examples:** ChatGPT GPT-6\
-**Testing environment:** ChatGPT conversation interface\
-**API / JSON mode:** Not used for the examples in this report
+**Prepared by:** Sudharshan S  
+**Course:** Generative AI and Agentic AI  
+**Date of experiment record:** 6 November 2026  
+**Model used for the recorded examples:** ChatGPT GPT-6  
+**Testing environment:** ChatGPT conversation interface  
+**API / JSON mode:** Not used
 
-------------------------------------------------------------------------
+---
 
 ## 1. Introduction
 
-Prompt engineering is the process of designing clear instructions,
-context, examples, and output requirements so that a large language
-model (LLM) is more likely to produce useful and consistent responses.
+Prompt engineering is the process of designing clear instructions, relevant context, examples, and output requirements so that a large language model (LLM) is more likely to produce useful and consistent responses.
 
-The purpose of this practical assignment is to compare three prompting
-techniques:
+This practical assignment demonstrates three prompt-engineering techniques:
 
-1.  **Zero-shot and few-shot prompting:** Does providing examples help a
-    model follow a classification pattern?
-2.  **Chain-of-thought-style prompting:** Does asking for a structured,
-    stepwise solution help with a multi-step calculation?
-3.  **Structured output prompting:** Can the model return valid JSON
-    that follows a defined schema across different inputs?
+1. **Zero-shot and few-shot prompting:** Compare classification with and without examples.
+2. **Step-by-step prompting:** Compare a direct answer with a response that shows the calculations for a multi-step problem.
+3. **Structured output prompting:** Extract information from natural-language messages and return it in a consistent JSON structure.
 
-The experiments use the same model within this ChatGPT session. The
-outputs below are recorded examples generated for this report. They are
-not results from a controlled API benchmark. Model settings such as
-temperature and seed were not exposed in this interface, so the results
-should be interpreted as a small practical demonstration, not a
-statistically conclusive evaluation.
+The examples in this report were recorded in a ChatGPT conversation. They are a small practical demonstration, not a controlled benchmark. Temperature, seed, and other generation settings were not controlled. The report does not claim that API-level JSON mode or schema-constrained output was used.
 
-**Important:** Preserve the outputs exactly as returned by the model
-when you conduct or repeat the experiments. If your own rerun differs,
-replace the relevant output in this report with your actual unedited
-response and update the analysis and scores. Do not claim to have used
-API JSON mode unless you actually enable it.
+**Reporting note:** The prompts and outputs below are retained as recorded. The five JSON objects were checked with a JSON parser and basic key, type, and date-format checks while preparing this report. If you repeat the experiments and obtain different outputs, preserve your own exact outputs and update the analysis accordingly.
 
-------------------------------------------------------------------------
+---
 
 ## 2. Experiment Setup
 
-### 2.1 Task and dataset
+### 2.1 Tasks and test data
 
-  ------------------------------------------------------------------------
-  Experiment               Task                    Test data
-  ------------------------ ----------------------- -----------------------
-  Zero-shot vs few-shot    Classify customer       5 reviews
-                           reviews as Positive,    
-                           Negative, or Neutral    
-
-  Chain-of-thought-style   Calculate profit or     1 word problem, tested
-  prompting                loss from a multi-step  with 2 prompts
-                           sales problem           
-
-  Structured output        Extract name, date, and 5 payment messages
-                           amount into JSON        
-  ------------------------------------------------------------------------
+| Experiment | Task | Test data |
+|---|---|---|
+| Zero-shot vs few-shot | Classify customer reviews as Positive, Negative, or Neutral | 5 reviews |
+| Step-by-step prompting | Calculate profit or loss from a multi-step sales problem | 1 word problem, 2 prompts |
+| Structured output | Extract name, date, and amount into JSON | 5 payment messages |
 
 ### 2.2 Evaluation criteria
 
--   **Classification:** Is the sentiment label reasonable and consistent
-    with the review?
--   **Reasoning:** Is the final answer correct, and are the cost and
-    selling-price calculations correct?
--   **JSON:** Is the response parseable JSON, does it contain the
-    required keys, and do the values have the expected types and
-    meanings?
+- **Classification:** Is the label reasonable under the stated classification rule?
+- **Calculation:** Is the final answer correct, and are the intermediate calculations correct?
+- **JSON:** Can the response be parsed as JSON? Does it contain exactly the required keys and acceptable value types and formats?
 
-------------------------------------------------------------------------
+---
 
 # 3. Experiment 1: Zero-Shot vs Few-Shot Prompting
 
 ## 3.1 Objective
 
-To compare whether providing examples in a prompt improves the
-consistency of customer-review sentiment classification.
+To compare whether providing examples in a prompt changes the results of customer-review sentiment classification.
 
-### What is zero-shot prompting?
+### Zero-shot prompting
 
-Zero-shot prompting asks the model to perform a task without showing
-examples of the desired input-output pattern.
+Zero-shot prompting asks the model to perform a task without providing examples of the desired input-output pattern.
 
-### What is few-shot prompting?
+### Few-shot prompting
 
-Few-shot prompting provides a small number of examples in the prompt.
-The examples demonstrate the pattern the model should follow. They guide
-the model's response without necessarily retraining or changing its
-parameters.
+Few-shot prompting provides a small number of examples inside the prompt. These examples demonstrate the pattern the model should follow. They guide the response without necessarily retraining or changing the model's parameters.
 
 ## 3.2 Test dataset
 
 The same five reviews are used for both approaches.
 
-  -----------------------------------------------------------------------
-  Test ID                 Customer review         Reference label
-  ----------------------- ----------------------- -----------------------
-  S1                      The product is          Positive
-                          excellent and arrived   
-                          earlier than expected.  
+| Test ID | Customer review | Expected label under the experiment's rule |
+|---|---|---|
+| S1 | The product is excellent and arrived earlier than expected. | Positive |
+| S2 | The item arrived broken and customer support did not respond. | Negative |
+| S3 | The package arrived yesterday. | Neutral |
+| S4 | The delivery was late, but the product quality is excellent. | Positive |
+| S5 | It works as described, but nothing about it is special. | Neutral |
 
-  S2                      The item arrived broken Negative
-                          and customer support    
-                          did not respond.        
-
-  S3                      The package arrived     Neutral
-                          yesterday.              
-
-  S4                      The delivery was late,  Mixed
-                          but the product quality 
-                          is excellent.           
-
-  S5                      It works as described,  Neutral
-                          but nothing about it is 
-                          special.                
-  -----------------------------------------------------------------------
-
-**Note on S4:** The review contains both a negative delivery experience
-and a positive product-quality statement. For this experiment, the
-reference label is **Mixed** conceptually, but the classifier's allowed
-labels are Positive, Negative, and Neutral. The experiment therefore
-uses the following rule: choose the dominant overall sentiment. This
-makes S4 a useful borderline case, and the expected dominant label is
-Positive because the review explicitly praises product quality. If a
-different label policy is preferred, define it before testing.
+**Classification rule for S4:** The review contains both a negative delivery experience and a positive product-quality statement. Since the available labels do not include Mixed, the prompt asks the model to choose the dominant overall sentiment. For this test, the expected label is Positive because the review explicitly praises the product quality. This rule is stated before comparing the outputs.
 
 ## 3.3 Prompt A: Zero-shot
 
-``` text
+```text
 Classify each customer review as Positive, Negative, or Neutral.
 
 Use the overall sentiment of the review. If the review contains both positive
@@ -147,7 +92,7 @@ S5: It works as described, but nothing about it is special.
 
 ### Recorded output: Zero-shot
 
-``` text
+```text
 S1: Positive
 S2: Negative
 S3: Neutral
@@ -159,7 +104,7 @@ S5: Neutral
 
 This prompt includes three examples before the test reviews.
 
-``` text
+```text
 You are a customer-review sentiment classifier.
 
 Classify each review as Positive, Negative, or Neutral.
@@ -193,7 +138,7 @@ Return only the test ID and its label.
 
 ### Recorded output: Few-shot
 
-``` text
+```text
 S1: Positive
 S2: Negative
 S3: Neutral
@@ -203,60 +148,41 @@ S5: Neutral
 
 ## 3.5 Comparison and analysis
 
-  Test ID   Reference label                 Zero-shot output   Few-shot output
-  --------- ------------------------------- ------------------ -----------------
-  S1        Positive                        Positive           Positive
-  S2        Negative                        Negative           Negative
-  S3        Neutral                         Neutral            Neutral
-  S4        Positive (dominant sentiment)   Positive           Positive
-  S5        Neutral                         Neutral            Neutral
+| Test ID | Expected label | Zero-shot output | Few-shot output |
+|---|---|---|---|
+| S1 | Positive | Positive | Positive |
+| S2 | Negative | Negative | Negative |
+| S3 | Neutral | Neutral | Neutral |
+| S4 | Positive | Positive | Positive |
+| S5 | Neutral | Neutral | Neutral |
 
-**Observed result:** Both prompts produced the same five labels in this
-run. Therefore, few-shot prompting did not improve the measured accuracy
-or consistency on this small, straightforward dataset.
+**Observed result:** Both prompts produced the same five labels. Under the stated expected labels, both approaches achieved 5/5 correct classifications in this small test.
 
-**Analysis:** The zero-shot prompt already contained clear label
-definitions and an instruction for mixed sentiment. The three examples
-in the few-shot prompt reinforced the expected pattern, but they did not
-change the outputs. This is an important finding: examples can help
-clarify a task, but they do not automatically improve results when the
-original instructions are already clear and the examples are easy.
+**Analysis:** The zero-shot prompt already included clear label options and a rule for mixed-sentiment reviews. The three examples in the few-shot prompt reinforced the pattern, but did not change the output. This shows that examples do not automatically improve results when the instructions are already clear and the test cases are straightforward.
 
-**Limitation:** This dataset is small and contains mostly clear cases. A
-larger dataset with ambiguous, sarcastic, or domain-specific reviews
-would be needed to test whether few-shot prompting provides a measurable
-improvement.
+**Limitation:** The dataset is small and contains mostly clear examples. A stronger follow-up experiment could include sarcasm, unclear wording, and reviews with conflicting opinions. Those additional cases should be tested and reported separately rather than counted as results in this experiment.
 
-------------------------------------------------------------------------
+---
 
-# 4. Experiment 2: Chain-of-Thought-Style Prompting
+# 4. Experiment 2: Step-by-Step Prompting
 
 ## 4.1 Objective
 
-To compare a direct answer prompt with a prompt that requests a
-structured, step-by-step calculation for a multi-step profit-and-loss
-problem.
+To compare a direct-answer prompt with a prompt that requests a structured, step-by-step calculation for a multi-step profit-and-loss problem.
 
-### What is chain-of-thought prompting?
+### What is step-by-step prompting?
 
-Chain-of-thought (CoT) prompting is commonly used to encourage a model
-to handle a problem through intermediate reasoning steps rather than
-jumping straight to a final answer.
-
-For this practical test, the stepwise prompt asks the model to show the
-relevant calculations. The report records the visible explanation
-returned by the model, not private internal reasoning.
+Step-by-step prompting asks the model to present the intermediate calculations or stages needed to solve a problem. In this report, the recorded explanation is the visible calculation returned by the model. It is not a record of private internal reasoning.
 
 ## 4.2 Problem
 
-A shopkeeper buys 20 notebooks for ₹40 each. He sells 15 notebooks for
-₹60 each and the remaining 5 notebooks for ₹30 each.
+A shopkeeper buys 20 notebooks for ₹40 each. He sells 15 notebooks for ₹60 each and the remaining 5 notebooks for ₹30 each.
 
 Calculate the total profit or loss.
 
 ## 4.3 Prompt A: Direct prompting
 
-``` text
+```text
 A shopkeeper buys 20 notebooks for ₹40 each. He sells 15 notebooks for ₹60
 each and the remaining 5 notebooks for ₹30 each.
 
@@ -265,13 +191,13 @@ Calculate the total profit or loss. Give only the final answer.
 
 ### Recorded output: Direct prompt
 
-``` text
+```text
 The shopkeeper makes a profit of ₹250.
 ```
 
 ## 4.4 Prompt B: Step-by-step prompting
 
-``` text
+```text
 A shopkeeper buys 20 notebooks for ₹40 each. He sells 15 notebooks for ₹60
 each and the remaining 5 notebooks for ₹30 each.
 
@@ -287,7 +213,7 @@ Present the final answer clearly.
 
 ### Recorded output: Step-by-step prompt
 
-``` text
+```text
 Step 1: Calculate the total cost price.
 20 × ₹40 = ₹800
 
@@ -309,77 +235,52 @@ Final Answer: The shopkeeper makes a profit of ₹250.
 
 ## 4.5 Independent verification
 
-The answer can be checked manually:
-
--   Total cost price = 20 × ₹40 = ₹800
--   First group selling price = 15 × ₹60 = ₹900
--   Second group selling price = 5 × ₹30 = ₹150
--   Total selling price = ₹900 + ₹150 = ₹1,050
--   Profit = ₹1,050 − ₹800 = ₹250
+- Total cost price = 20 × ₹40 = ₹800
+- Selling price of the first 15 notebooks = 15 × ₹60 = ₹900
+- Selling price of the remaining 5 notebooks = 5 × ₹30 = ₹150
+- Total selling price = ₹900 + ₹150 = ₹1,050
+- Profit = Total selling price − Total cost price = ₹1,050 − ₹800 = ₹250
 
 **Verified result: ₹250 profit.**
 
 ## 4.6 Comparison and analysis
 
-  Criterion                Direct prompt   Step-by-step prompt
-  ------------------------ --------------- ---------------------
-  Final answer             ₹250 profit     ₹250 profit
-  Calculation shown        No              Yes
-  Independently verified   Correct         Correct
-  Easier to audit          Less detail     More detail
+| Criterion | Direct prompt | Step-by-step prompt |
+|---|---|---|
+| Final answer | ₹250 profit | ₹250 profit |
+| Intermediate calculations shown | No | Yes |
+| Final answer independently verified | Correct | Correct |
+| Ease of checking the calculation | Lower | Higher |
 
-**Observed result:** Both prompts returned the correct final answer. The
-step-by-step prompt did not improve the final-answer accuracy in this
-example because the direct prompt was already answered correctly.
+**Observed result:** Both prompts returned the correct final answer. Step-by-step prompting did not improve final-answer accuracy in this example because the direct prompt was already answered correctly.
 
-**Analysis:** The main improvement was transparency and auditability.
-The detailed prompt exposed the intermediate calculations, making it
-easier to identify an arithmetic mistake if one occurred. This
-experiment does not prove that step-by-step prompting always improves
-accuracy. More difficult problems and repeated tests would be needed to
-measure that effect.
+**Analysis:** The main benefit was transparency. The detailed response exposed each calculation, making it easier for a person to check the result and locate a possible arithmetic error. This single example does not prove that step-by-step prompting always improves accuracy. More difficult problems and repeated tests would be needed to measure that effect.
 
-------------------------------------------------------------------------
+---
 
 # 5. Experiment 3: Structured Output Prompting
 
 ## 5.1 Objective
 
-To make the model extract payment details from natural-language messages
-and return them in a consistent JSON structure across five different
-inputs.
+To extract payment details from natural-language messages and return them in a consistent JSON structure across five inputs.
 
 ### What is structured output?
 
-Structured output means asking the model to return information in a
-predefined format instead of free-form paragraphs.
+Structured output means returning information in a predefined format instead of a free-form paragraph. JSON (JavaScript Object Notation) is commonly used to exchange structured data between applications and APIs.
 
-JSON (JavaScript Object Notation) is commonly used to exchange
-structured data between applications and APIs.
+## 5.2 Define the required structure
 
-## 5.2 Define the required schema
+Each response must contain exactly three fields.
 
-Each response must contain exactly three fields:
-
-  -----------------------------------------------------------------------
-  Field                   Type                    Requirement
-  ----------------------- ----------------------- -----------------------
-  `name`                  String or null          Person associated with
-                                                  the payment
-
-  `date`                  String or null          Date in `YYYY-MM-DD`
-                                                  format
-
-  `amount`                Number or null          Amount as a numeric
-                                                  value, without a
-                                                  currency symbol
-  -----------------------------------------------------------------------
+| Field | Expected type | Requirement |
+|---|---|---|
+| `name` | String or null | Person associated with the payment |
+| `date` | String or null | Date in `YYYY-MM-DD` format |
+| `amount` | Number or null | Numeric amount without a currency symbol |
 
 ### JSON Schema
 
-The following schema describes the required output structure:
-
-``` json
+```json
 {
   "type": "object",
   "properties": {
@@ -388,7 +289,7 @@ The following schema describes the required output structure:
     },
     "date": {
       "type": ["string", "null"],
-      "description": "Date in YYYY-MM-DD format"
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
     },
     "amount": {
       "type": ["number", "null"]
@@ -399,13 +300,11 @@ The following schema describes the required output structure:
 }
 ```
 
-The schema defines the expected structure and data types. A production
-system should also validate that non-null date strings are real calendar
-dates in the required format.
+The schema defines the required keys and value types. The date pattern checks the expected text format, but a separate date check is still needed to reject impossible dates such as 2026-02-30.
 
 ## 5.3 Prompt used
 
-``` text
+```text
 You are an information extraction assistant.
 
 Extract the payment details from the input message and return one valid JSON
@@ -436,13 +335,13 @@ Input:
 
 **Input**
 
-``` text
+```text
 Rahul transferred Rs. 2500 on 5 November 2026.
 ```
 
 **Recorded JSON output**
 
-``` json
+```json
 {
   "name": "Rahul",
   "date": "2026-11-05",
@@ -450,20 +349,17 @@ Rahul transferred Rs. 2500 on 5 November 2026.
 }
 ```
 
-**Validation:** Valid JSON. All three keys are present. The date and
-amount use the required formats.
-
 ### Test 2
 
 **Input**
 
-``` text
+```text
 Priya paid ₹1,500 on 12 October 2026 for the service.
 ```
 
 **Recorded JSON output**
 
-``` json
+```json
 {
   "name": "Priya",
   "date": "2026-10-12",
@@ -471,20 +367,17 @@ Priya paid ₹1,500 on 12 October 2026 for the service.
 }
 ```
 
-**Validation:** Valid JSON. The amount is numeric and the date is
-normalized to `YYYY-MM-DD`.
-
 ### Test 3
 
 **Input**
 
-``` text
+```text
 On 20 September 2026, Arjun received Rs. 5,000 from a customer.
 ```
 
 **Recorded JSON output**
 
-``` json
+```json
 {
   "name": "Arjun",
   "date": "2026-09-20",
@@ -492,20 +385,17 @@ On 20 September 2026, Arjun received Rs. 5,000 from a customer.
 }
 ```
 
-**Validation:** Valid JSON. The person, date and amount are extracted in
-the required structure.
-
 ### Test 4
 
 **Input**
 
-``` text
+```text
 Sneha made a payment of 750 rupees yesterday.
 ```
 
 **Recorded JSON output**
 
-``` json
+```json
 {
   "name": "Sneha",
   "date": "2026-11-05",
@@ -513,22 +403,19 @@ Sneha made a payment of 750 rupees yesterday.
 }
 ```
 
-**Validation:** Valid JSON. The reference date for this experiment is 6
-November 2026, so "yesterday" is interpreted as 5 November 2026. This
-test depends on the reference date being supplied or otherwise reliably
-known.
+**Date interpretation:** The experiment record is dated 6 November 2026, so "yesterday" is interpreted as 5 November 2026. For repeatable testing, a production prompt should explicitly supply the reference date rather than relying on the model to infer the current date.
 
 ### Test 5
 
 **Input**
 
-``` text
+```text
 Payment received from Kiran.
 ```
 
 **Recorded JSON output**
 
-``` json
+```json
 {
   "name": "Kiran",
   "date": null,
@@ -536,175 +423,106 @@ Payment received from Kiran.
 }
 ```
 
-**Validation:** Valid JSON. The name is available, while the date and
-amount are missing. The model uses null rather than inventing values.
+The name is available, but the date and amount are missing. The model uses `null` rather than inventing values.
 
 ## 5.5 JSON validation results
 
-  --------------------------------------------------------------------------
-  Test           Valid JSON     Required keys  Types and      Overall pass
-                                present        values         
-                                               acceptable     
-  -------------- -------------- -------------- -------------- --------------
-  1              Yes            Yes            Yes            Pass
+The five recorded JSON objects were parsed and checked for:
+- Valid JSON syntax.
+- Exactly the three required keys.
+- Acceptable value types for `name`, `date`, and `amount`.
+- The required date text format when a date is present.
 
-  2              Yes            Yes            Yes            Pass
+| Test | JSON parsing | Required keys | Value types and date format | Result |
+|---|---|---|---|---|
+| 1 | Pass | Pass | Pass | Pass |
+| 2 | Pass | Pass | Pass | Pass |
+| 3 | Pass | Pass | Pass | Pass |
+| 4 | Pass | Pass | Pass | Pass |
+| 5 | Pass | Pass | Pass | Pass |
+| **Total** | **5/5** | **5/5** | **5/5** | **5/5** |
 
-  3              Yes            Yes            Yes            Pass
+**Success rate**
 
-  4              Yes            Yes            Yes, with      Pass
-                                               reference date 
+Success rate = (Passing outputs ÷ Total test inputs) × 100
 
-  5              Yes            Yes            Yes            Pass
+Success rate = (5 ÷ 5) × 100 = **100%**
 
-  **Total**      **5/5**        **5/5**        **5/5**        **5/5**
-  --------------------------------------------------------------------------
+**Important qualification:** This is the result for these five recorded examples only. It does not guarantee 100% accuracy on unseen messages. The checks confirm JSON syntax and basic structure, not that every extracted fact is semantically correct. The relative-date test also depends on the stated reference date.
 
-### Success rate
+## 5.6 What helped produce consistent JSON?
 
-For this five-case recorded set:
-
-`Success rate = (Number of passing outputs / Total test inputs) × 100`
-
-`Success rate = (5 / 5) × 100 = 100%`
-
-**Important qualification:** This is the observed result for the five
-recorded examples, not a guarantee that the prompt will achieve 100% on
-unseen inputs. Five tests are too few to establish production
-reliability.
-
-## 5.6 What improved reliability?
-
-The following prompt-design choices helped make the expected structure
-explicit:
-
-1.  **Explicit schema:** The exact keys and value types were stated.
-2.  **Required fields:** The prompt said all three keys must appear
-    every time.
-3.  **Missing-value rule:** Missing information was represented as
-    `null`, reducing the chance of invented values.
-4.  **Date normalization:** A single date format was specified.
-5.  **No-extra-fields rule:** The model was told not to add unrelated
-    keys.
-6.  **Exact output example:** The required JSON shape was shown directly
-    in the prompt.
+1. **Explicit keys:** The prompt named the exact fields required.
+2. **Value types:** It specified strings, numbers, and `null`.
+3. **Required fields:** It instructed the model to include all three keys every time.
+4. **Missing-value rule:** It instructed the model to use `null` instead of guessing.
+5. **Date normalization:** It specified one date format.
+6. **No-extra-fields rule:** It prohibited additional keys.
+7. **Output example:** It showed the expected JSON shape directly.
 
 ### JSON mode and structured-output API features
 
-The five examples above were generated in the ChatGPT conversation
-interface. They were **not** generated using an API's JSON mode or
-schema-constrained output feature.
+The five examples were generated in the ChatGPT conversation interface. They were not generated using an API's JSON mode or schema-constrained output feature.
 
-For a production API implementation, a supported structured-output
-feature can enforce a JSON schema more strongly than prompt instructions
-alone. The returned response should still be validated by the
-application, especially for semantic correctness such as whether a date
-is valid or whether an amount was extracted from the correct part of the
-message.
+In a production application, a supported structured-output feature can enforce a schema more strongly than prompt instructions alone. The application should still validate the returned data, especially semantic details such as whether a date is a real calendar date and whether an amount was extracted from the correct part of the message.
 
-------------------------------------------------------------------------
+---
 
 # 6. Overall Comparison
 
-  -----------------------------------------------------------------------
-  Technique         Main purpose      What happened in  Main lesson
-                                      this experiment   
-  ----------------- ----------------- ----------------- -----------------
-  Zero-shot         Perform a task    Correct labels    Clear
-                    without examples  for all five test instructions can
-                                      reviews           be sufficient for
-                                                        simple tasks
+| Technique | Main purpose | Result in this experiment | Main lesson |
+|---|---|---|---|
+| Zero-shot | Perform a task without examples | 5/5 expected labels | Clear instructions can be sufficient for simple tasks. |
+| Few-shot | Show examples of the expected pattern | Same five labels as zero-shot | Examples did not change the result on this small dataset. |
+| Step-by-step prompting | Show intermediate calculations | Same correct final answer, with more detail | Visible calculations make results easier to audit. |
+| Structured output | Return data in a fixed format | 5/5 recorded JSON objects passed basic checks | Explicit keys, types, and missing-value rules improve structural consistency. |
 
-  Few-shot          Demonstrate the   Same labels as    Examples did not
-                    expected pattern  zero-shot         improve this
-                    with examples                       particular small
-                                                        test
-
-  Step-by-step      Encourage visible Same correct      More visible
-  prompting         intermediate      final answer,     calculations make
-                    calculations      with more detail  answers easier to
-                                                        audit
-
-  Structured output Return data in a  Five of five      Explicit fields,
-                    fixed format      recorded outputs  types and
-                                      passed the checks missing-value
-                                                        rules improve
-                                                        consistency
-  -----------------------------------------------------------------------
-
-------------------------------------------------------------------------
+---
 
 # 7. Limitations and Lessons Learned
 
-1.  **Small sample size:** Five classification reviews and five JSON
-    inputs are useful for a demonstration, but not enough for a strong
-    reliability claim.
-2.  **No controlled sampling settings:** Temperature, seed and other
-    generation settings were not controlled in the ChatGPT interface.
-3.  **No API schema enforcement:** The JSON experiment used prompt
-    instructions, not an API-level constrained-output feature.
-4.  **Correct format does not guarantee correct meaning:** JSON can be
-    syntactically valid while containing an incorrect name, date or
-    amount. Semantic validation is also necessary.
-5.  **Stepwise explanations do not guarantee correctness:** Intermediate
-    calculations should be independently checked.
-6.  **Few-shot prompting is not automatically better:** Examples are
-    most useful when they clarify a pattern that the instructions alone
-    do not communicate clearly.
+1. **Small sample size:** Five reviews and five payment messages are suitable for a basic demonstration, but not enough to establish broad reliability.
+2. **No controlled generation settings:** Temperature, seed, and other generation settings were not controlled in the ChatGPT interface.
+3. **No API schema enforcement:** The JSON experiment used prompt instructions, not an API-level constrained-output feature.
+4. **Valid JSON does not guarantee correct meaning:** A response can be syntactically valid while containing an incorrect name, date, or amount. Semantic validation is also necessary.
+5. **Step-by-step explanations do not guarantee correctness:** Intermediate calculations must still be checked.
+6. **Few-shot prompting is not automatically better:** Examples are most useful when they clarify a pattern that the instructions alone do not communicate clearly.
+7. **Relative dates need context:** Terms such as "yesterday" should be interpreted against an explicitly supplied reference date for repeatable results.
 
-------------------------------------------------------------------------
+---
 
 # 8. Conclusion
 
-This practical assignment demonstrated three important
-prompt-engineering techniques.
+This practical assignment demonstrated three important prompt-engineering techniques.
 
-Zero-shot prompting showed that a model can perform a clearly defined
-task without examples. Few-shot prompting provided examples of the
-expected classification pattern, although it did not improve the results
-on this particular dataset. Step-by-step prompting made a multi-step
-calculation easier to inspect, even though both prompts produced the
-same correct answer. Structured output prompting produced consistent
-JSON objects for the five recorded payment messages, including a case
-with missing information.
+Zero-shot prompting showed that a model can perform a clearly defined classification task without examples. Few-shot prompting supplied examples of the expected pattern, although it did not change the results on this particular dataset. Step-by-step prompting made a multi-step calculation easier to inspect, even though both prompts produced the same correct final answer. Structured output prompting returned consistent JSON objects for five payment messages, including one message with missing information.
 
-The main lesson is that prompt engineering is not simply about writing
-longer prompts. It is about choosing the right instructions, examples,
-context and output constraints for the task. The results must also be
-tested and validated rather than assumed to be reliable.
+The main lesson is that prompt engineering is not simply about writing longer prompts. It is about selecting suitable instructions, examples, context, and output constraints for the task. Model responses should be tested and validated rather than assumed to be reliable.
 
-------------------------------------------------------------------------
+---
 
 # 9. Final Submission Checklist
 
-Before submitting this report, verify the following:
+- [ ] Confirm that your name, course, and date are correct.
+- [ ] Confirm that the model name and testing environment match the experiments you actually performed.
+- [ ] Preserve the exact prompts and raw outputs from your own experiment runs.
+- [ ] Use the same test inputs when comparing zero-shot and few-shot prompting.
+- [ ] Check the profit calculation independently.
+- [ ] Validate JSON using a parser and check keys, types, and date values.
+- [ ] Keep failures in the report and calculate the success rate from actual results.
+- [ ] Do not claim API JSON mode or schema enforcement unless you actually used it.
+- [ ] Save the Markdown file in your public GitHub repository or another location accessible to the evaluator.
+- [ ] Submit the shareable link to the report.
 
--   [ ] Replace `[Your Name]` and add your course or batch details.
--   [ ] Confirm the model name and date shown in the report.
--   [ ] If you rerun any experiment, replace the recorded output with
-    your own exact, unedited model output.
--   [ ] Keep the same test inputs when comparing zero-shot and few-shot
-    prompts.
--   [ ] Check the calculation in the reasoning experiment independently.
--   [ ] Validate each JSON response using a JSON parser or validator.
--   [ ] Keep failures in the report and calculate the success rate from
-    the actual results.
--   [ ] Do not claim API JSON mode or schema enforcement unless you
-    actually used it.
--   [ ] Save this Markdown file in your public GitHub repository or
-    another location that your evaluator can access.
--   [ ] Submit the shareable link to the Markdown report.
+---
 
-## 10. References for Further Learning
+# 10. References for Further Learning
 
--   OpenAI Prompt Engineering Guide:
-    https://platform.openai.com/docs/guides/prompt-engineering
--   OpenAI Structured Outputs Guide:
-    https://platform.openai.com/docs/guides/structured-outputs
--   JSON official website: https://www.json.org/json-en.html
--   JSON Schema documentation:
-    https://json-schema.org/learn/getting-started-step-by-step
+- OpenAI Prompt Engineering Guide: https://platform.openai.com/docs/guides/prompt-engineering
+- OpenAI Structured Outputs Guide: https://platform.openai.com/docs/guides/structured-outputs
+- JSON official website: https://www.json.org/json-en.html
+- JSON Schema documentation: https://json-schema.org/learn/getting-started-step-by-step
 
-------------------------------------------------------------------------
+---
 
 **End of Report**
