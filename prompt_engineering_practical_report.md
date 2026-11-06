@@ -499,24 +499,8 @@ Zero-shot prompting showed that a model can perform a clearly defined classifica
 
 The main lesson is that prompt engineering is not simply about writing longer prompts. It is about selecting suitable instructions, examples, context, and output constraints for the task. Model responses should be tested and validated rather than assumed to be reliable.
 
----
 
-# 9. Final Submission Checklist
-
-- [ ] Confirm that your name, course, and date are correct.
-- [ ] Confirm that the model name and testing environment match the experiments you actually performed.
-- [ ] Preserve the exact prompts and raw outputs from your own experiment runs.
-- [ ] Use the same test inputs when comparing zero-shot and few-shot prompting.
-- [ ] Check the profit calculation independently.
-- [ ] Validate JSON using a parser and check keys, types, and date values.
-- [ ] Keep failures in the report and calculate the success rate from actual results.
-- [ ] Do not claim API JSON mode or schema enforcement unless you actually used it.
-- [ ] Save the Markdown file in your public GitHub repository or another location accessible to the evaluator.
-- [ ] Submit the shareable link to the report.
-
----
-
-# 10. References for Further Learning
+# 9. References for Further Learning
 
 - OpenAI Prompt Engineering Guide: https://platform.openai.com/docs/guides/prompt-engineering
 - OpenAI Structured Outputs Guide: https://platform.openai.com/docs/guides/structured-outputs
